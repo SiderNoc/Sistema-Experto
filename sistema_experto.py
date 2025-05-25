@@ -69,10 +69,33 @@ def regla_ospf(hechos, config):
             if network_ip and wildcard and area:
                 config.append(f" network {network_ip} {wildcard} area {area}")
             else:
-                # Opcional: registrar un aviso si una red está incompleta
+                # registrar un aviso si una red está incompleta
                 print(f"[AVISO] Red OSPF incompleta para el proceso {process_id}: {red_info}. Omitiendo.")
                 
         config.append(" exit")
+
+def regla_nat(hechos, config):
+    tipo_nat = hechos.get("tipo_nat")
+
+    if hechos.get("nat_inside_interface") and hechos.get("nat_outside_interface"):
+        # Marcar interfaces NAT
+        config.append(f"interface {hechos['nat_inside_interface']}")
+        config.append(" ip nat inside")
+        config.append(" exit")
+
+        config.append(f"interface {hechos['nat_outside_interface']}")
+        config.append(" ip nat outside")
+        config.append(" exit")
+
+    if tipo_nat == "dinamico":
+        if hechos.get("nat_acl_num") and hechos.get("nat_red_local") and hechos.get("nat_wildcard"):
+            config.append(f"access-list {hechos['nat_acl_num']} permit {hechos['nat_red_local']} {hechos['nat_wildcard']}")
+            config.append(f"ip nat inside source list {hechos['nat_acl_num']} interface {hechos['nat_outside_interface']} overload")
+
+    elif tipo_nat == "estatico":
+        if hechos.get("ip_privada") and hechos.get("ip_publica"):
+            config.append(f"ip nat inside source static {hechos['ip_privada']} {hechos['ip_publica']}")
+
 
 def aplicar_reglas(hechos):
     config = []
@@ -85,6 +108,7 @@ def aplicar_reglas(hechos):
         regla_ip_router,
         regla_ip_switch,
         regla_ospf,
+        regla_nat,
         regla_guardar #Esta regla se ejecuta al final
     ]
 

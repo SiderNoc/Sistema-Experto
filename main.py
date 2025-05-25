@@ -65,13 +65,23 @@ def main():
 #TERMINAR LA REGLA DE NAT
 #REVISAR LA PREGUNTA DE NAT
     if preguntar("¿Deseas configurar NAT? (s/n): ") == 's':
-        if tipo == "router":
-            if preguntar("Desea configurar NAT estatico o dinamico? (e/d): ") == "e":
-                hechos["nat_e_internat"] = input("Dirección IP interna: ").strip()
-                hechos["nat_e_externa"] = input("Dirección IP externa: ").strip()
-            elif preguntar("Desea configurar NAT estatico o dinamico? (e/d): ") == "d":
-                hechos["nat_d_internat"] = input("Dirección IP interna: ").strip()
-                hechos["nat_d_externa"] = input("Dirección IP externa: ").strip()        
+        tipo_nat = preguntar("¿Qué tipo de NAT deseas configurar? (dinamico/estatico): ")
+        hechos["tipo_nat"] = tipo_nat
+
+        if tipo_nat == "dinamico":
+            hechos["nat_inside_interface"] = input("Interfaz interna (ej. GigabitEthernet0/0): ").strip()
+            hechos["nat_outside_interface"] = input("Interfaz externa (ej. GigabitEthernet0/1): ").strip()
+            hechos["nat_acl_num"] = input("Número de lista de acceso estándar para NAT (ej. 1): ").strip()
+            hechos["nat_red_local"] = input("Red interna para NAT (ej. 192.168.1.0): ").strip()
+            hechos["nat_wildcard"] = input("Wildcard de la red interna (ej. 0.0.0.255): ").strip()
+
+        elif tipo_nat == "estatico":
+            hechos["nat_inside_interface"] = input("Interfaz interna (ej. GigabitEthernet0/0): ").strip()
+            hechos["nat_outside_interface"] = input("Interfaz externa (ej. GigabitEthernet0/1): ").strip()
+            hechos["ip_privada"] = input("Dirección IP privada (ej. 192.168.1.10): ").strip()
+            hechos["ip_publica"] = input("Dirección IP pública (ej. 200.1.1.10): ").strip()
+
+      
 ###
     if preguntar("Deseas guardar la configuracion? (s/n): ") == 's':
         hechos["wr"] = ''
