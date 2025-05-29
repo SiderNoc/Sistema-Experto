@@ -1,3 +1,4 @@
+#Revisar para agregar ipv6 y checar si quiere mas de una
 from sistema_experto import aplicar_reglas, guardar_configuracion
 
 def preguntar(texto):
@@ -21,15 +22,23 @@ def main():
 
         if preguntar("¿Deseas establecer enable secret? (s/n): ") == 's':
             hechos["enable_secret"] = input("Contraseña para enable secret: ").strip()
+
+    if preguntar("¿Deseas encriptar las contraseñas? (s/n): ") == 's':
+        hechos["encriptar_contrasenas"] = True
+    else:
+        hechos["encriptar_contrasenas"] = False
     
     if preguntar("¿Deseas establecer un banner MOTD? (s/n): ") == 's':
         hechos["banner_motd"] = input("Escribe el mensaje para el banner MOTD: ").strip()
 
-    if preguntar("Deseas establecer una dirección IPv4? (s/n): ") == 's':
+    #Revisar para agregar ipv6 y checar si quiere mas de una
+    if preguntar("Deseas establecer una dirección IPv4? (s/n): ") == 's': 
         if tipo == "router":
             hechos["interface"] = input("Interfaz (ej. GigabitEthernet0/0): ").strip()
             hechos["ip_router"] = input("Dirección IP del router: ").strip()
             hechos["mascara_router"] = input("Máscara de subred del router: ").strip()
+            if preguntar("Desea agregar una descripcion a la interfaz? (s/n): ") == 's':
+                hechos["descripcion_router"] = input("Descripción de la interfaz: ")
         elif tipo == "switch":
             hechos["interface"] = input("Interfaz (ej. VLAN1): ").strip()
             hechos["ip_switch"] = input("Dirección IP del switch: ").strip()
@@ -81,7 +90,6 @@ def main():
             hechos["ip_privada"] = input("Dirección IP privada (ej. 192.168.1.10): ").strip()
             hechos["ip_publica"] = input("Dirección IP pública (ej. 200.1.1.10): ").strip()
 
-      
 ###
     if preguntar("Deseas guardar la configuracion? (s/n): ") == 's':
         hechos["wr"] = ''

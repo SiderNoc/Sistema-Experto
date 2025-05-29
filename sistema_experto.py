@@ -1,5 +1,5 @@
 #REGLAS DEL SISTEMA EXPERTPO
-
+#Modificar la regla de encriptar contrase;a para que verifique que si se hayan ingresado contrase;as antes de
 def regla_hostname(hechos, config):
     if hechos.get("hostname"):
         config.append(f"hostname {hechos['hostname']}")
@@ -29,6 +29,12 @@ def regla_enable_secret(hechos, config):
     if hechos.get("enable_secret"):
         config.append(f"enable secret {hechos['enable_secret']}")
 
+def regla_encriptar_contrasenas(hechos, config):
+    if hechos.get("encriptar_contrasenas", True):  # Por defecto, encriptar contraseñas
+        config.append("service password-encryption")
+    else:
+        print("[DEBUG] No se encriptarán las contraseñas")  # Mensaje de depuración si no se encriptan
+
 def regla_banner_motd(hechos, config):
     if hechos.get("banner_motd"):
         print("[DEBUG] Ejecutando regla_banner_motd")
@@ -38,8 +44,11 @@ def regla_ip_router(hechos, config):
     if hechos.get("ip_router") and hechos.get("mascara_router"):
         config.append(f"interface {hechos['interface']}")
         config.append(f" ip address {hechos['ip_router']} {hechos['mascara_router']}")
+        if hechos.get("descripcion_router"):
+            config.append(f" description {hechos['descripcion_router']}")
         config.append(" no shutdown")
         config.append(" exit")
+
 
 def regla_ip_switch(hechos, config):
     if hechos.get("ip_switch") and hechos.get("mascara_switch"):
@@ -104,6 +113,7 @@ def aplicar_reglas(hechos):
         regla_consola,
         regla_vty,
         regla_enable_secret,
+        regla_encriptar_contrasenas,
         regla_banner_motd,
         regla_ip_router,
         regla_ip_switch,
