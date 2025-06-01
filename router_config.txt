@@ -1,8 +1,22 @@
 enable
 configure terminal
-interface g0/0
- ip address 192.168.1.1 255.255.255.0
+line console 0
+ password iasucbn
+ login
+ exit
+service password-encryption
+interface g0/0/0
+ ip address 1234567890 123456789
+ ipv6 address 23456789/64
+ ipv6 enable
  no shutdown
  exit
+interface s0/1/0
+ description ayuda porfa
+ ipv6 address 0987654/33
+ ipv6 enable
+ no shutdown
+ exit
+
 end
 wr

@@ -1,0 +1,8 @@
+enable
+configure terminal
+interface VLAN1
+ ip address 4567890 23456789
+ no shutdown
+ exit
+end
+wr
