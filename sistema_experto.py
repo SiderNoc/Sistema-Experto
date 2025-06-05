@@ -1,12 +1,9 @@
 # REGLAS DEL SISTEMA EXPERTPO
 
 # CAMBIOS REALIZADOS:
-# Ahora regla_encriptar_contrasenas solo se ejecuta si se han configurado contraseñas.
-# Se sustituyo regla_ip_router por regla_interfaces_router para manejar múltiples interfaces.
-# Se seccionaron las reglas preguntas en reglas generales y especificas para cada dispositivo
+# regla_ip_switch para manejar múltiples interfaces si es necesario.
 
 # COSAS A REVISAR:
-# Modificar regla_ip_switch para manejar múltiples interfaces si es necesario.
 # Modificar regla_ip_switch para solo solictar numero de VLAN
 # Añadir reglas para aplicar las VLANs en los switches si es necesario.
 
@@ -57,16 +54,31 @@ def regla_banner_motd(hechos, config):
 
 
 # Reglas de switches
-#EN MODIFICACION
-def regla_ip_switch(hechos, config):
-    if hechos.get("ip_switch") and hechos.get("mascara_switch"):
-        config.append(f"interface {hechos['interface']}")
-        config.append(f" ip address {hechos['ip_switch']} {hechos['mascara_switch']}")
-        config.append(" no shutdown")
-        config.append(" exit")
+def regla_interfaces_switch(hechos, config):
+    if "interfaces_switch" in hechos and hechos["interfaces_switch"]:
+        for interfaz_data in hechos["interfaces_switch"]:
+            nombre_interfaz = interfaz_data.get("interface")
+            if not nombre_interfaz:
+                print(f"[AVISO] Se omitió una interfaz de switch porque no tiene nombre: {interfaz_data}")
+                continue
 
-####
-###
+            config.append(f"interface {nombre_interfaz}")
+
+            ip_switch = interfaz_data.get("ip_switch")
+            mascara_switch = interfaz_data.get("mascara_switch")
+            if ip_switch and mascara_switch:
+                config.append(f" ip address {ip_switch} {mascara_switch}")
+            elif ip_switch or mascara_switch:
+                print(f"[AVISO] Para la interfaz {nombre_interfaz} del switch, se proporcionó IP o máscara, pero no ambos. Se omitirá la configuración IP.")
+
+            # Opcional: Podrías añadir lógica para descripciones u otras configuraciones específicas de switch aquí
+            descripcion = interfaz_data.get("descripcion")
+            if descripcion:
+                config.append(f" description {descripcion}")
+
+            config.append(" no shutdown")
+            config.append(" exit")
+        config.append("") # Añade una línea en blanco para mayor legibilidad
 
 
 # Reglas de routers
@@ -167,7 +179,7 @@ def aplicar_reglas(hechos):
         regla_encriptar_contrasenas,
         regla_banner_motd,
         regla_interfaces_router,
-        regla_ip_switch,
+        regla_interfaces_switch,
         regla_ospf,
         regla_nat,
         regla_guardar #Esta regla se ejecuta al final
@@ -181,8 +193,7 @@ def aplicar_reglas(hechos):
 
 def guardar_configuracion(config, nombre_archivo):
     with open(nombre_archivo, 'w') as f:
-        f.write('enable\n')
-        f.write('configure terminal\n')
-        f.write("\n".join(config))
-        f.write("\n")
+        #Mismo codigo que el commit anterior pero abreviado
+        f.write("enable\nconfigure terminal\n")
+        f.write("\n".join(config) + "\n")
     print(f" Configuración guardada en: {nombre_archivo}")

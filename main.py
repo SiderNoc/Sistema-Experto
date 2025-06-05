@@ -1,7 +1,5 @@
 # CAMBIOS REALIZADOS:
-# Ahora solo se preguntara si se desea encriptar las contraseñas si se han configurado alguna de ellas
-# Se dividio la regla de interfaces en dos, una para switches y otra para routers, para manejar múltiples interfaces.
-# Se seccionaron las preguntas en reglas generales y especificas para cada dispositivo
+# Se modifico todo el pedo para que ahora puedan configurarse varias interfaces en los switches
 
 
 
@@ -45,11 +43,37 @@ def main():
 
     # CONFIGURACIONES ESPECÍFICAS PARA SWITCHES
     if tipo == "switch":
-        if preguntar("¿Deseas configurar las interfaces? (s/n): ") == 's': 
-                hechos["interface"] = input("Interfaz (ej. VLAN1): ").strip()
-                hechos["ip_switch"] = input("Dirección IP del switch: ").strip()
-                hechos["mascara_switch"] = input("Máscara de subred del switch: ").strip()
-    ###
+        if preguntar("¿Deseas configurar las interfaces del switch? (s/n): ") == 's':
+            cantidad_interfaces = 0
+            interfaces = []
+            # Preguntar cuántas interfaces se desean configurar
+            while True:
+                try:
+                    cantidad_interfaces_str = input("¿Cuántas interfaces deseas configurar en el switch? ")
+                    cantidad_interfaces = int(cantidad_interfaces_str)
+                    if cantidad_interfaces >= 0:
+                        break
+                    else:
+                        print("Por favor, ingresa un número válido.")
+                except ValueError:
+                    print("Entrada no válida. Por favor, ingresa un número.")
+
+            for i in range(cantidad_interfaces):
+                print(f"\n--- Configurando Interfaz de Switch #{i + 1} ---")
+                interfaz = {}
+                interfaz["interface"] = input(f"Interfaz {i + 1} (ej. VLAN1, GigabitEthernet0/1): ").strip()
+
+                if preguntar("¿Deseas configurar una dirección IP y máscara para esta interfaz? (s/n): ") == 's':
+                    interfaz["ip_switch"] = input(f"Dirección IP del switch para la interfaz {i + 1}: ").strip()
+                    interfaz["mascara_switch"] = input(f"Máscara de subred del switch para la interfaz {i + 1}: ").strip()
+
+                if preguntar("¿Deseas establecer una descripción para la interfaz? (s/n): ") == 's':
+                    interfaz["descripcion"] = input(f"Descripción de la interfaz {i + 1}: ")
+
+                interfaces.append(interfaz)
+
+            if interfaces:
+                hechos["interfaces_switch"] = interfaces
     
     # CONFIGURACIONES ESPECÍFICAS PARA ROUTERS
 

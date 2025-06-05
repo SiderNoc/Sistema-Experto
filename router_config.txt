@@ -1,22 +1,16 @@
 enable
 configure terminal
-line console 0
- password iasucbn
- login
- exit
-service password-encryption
-interface g0/0/0
- ip address 1234567890 123456789
- ipv6 address 23456789/64
+interface g0/0
+ ip address 1111 11111
+ ipv6 address 1111/64
  ipv6 enable
  no shutdown
  exit
-interface s0/1/0
- description ayuda porfa
- ipv6 address 0987654/33
+interface s0/0/0
+ description tu mama
+ ip address 12234 12243
+ ipv6 address 123241/64
  ipv6 enable
  no shutdown
  exit
 
-end
-wr
