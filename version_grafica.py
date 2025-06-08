@@ -3,7 +3,6 @@ import flet as ft
 from sistema_experto import aplicar_reglas, guardar_configuracion
 import ipaddress
 
-# --- FUNCIÓN AUXILIAR DE CIDR ---
 def cidr_to_mask(cidr_str):
     try:
         cidr = int(cidr_str)
@@ -13,7 +12,6 @@ def cidr_to_mask(cidr_str):
         return ".".join(map(str, octets))
     except (ValueError, TypeError): return ""
 
-# --- NUEVA FUNCIÓN AUXILIAR PARA OSPF ---
 def ip_and_cidr_to_network_wildcard(ip_str, cidr_str):
     """Calcula la red y la wildcard a partir de una IP y un CIDR."""
     try:
@@ -164,8 +162,7 @@ def main(page: ft.Page):
                     "mascara_switch": mascara_val}
                 if interfaz["interface"]: interfaces.append(interfaz)
             if interfaces: hechos["interfaces_switch"] = interfaces
-        
-        # --- SECCIÓN CORREGIDA ---
+
         # 3. Recopilar datos de Router (OSPF, NAT)
         if hechos["tipo"] == "router":
             # Recoger OSPF Process ID
@@ -210,8 +207,6 @@ def main(page: ft.Page):
         page.snack_bar = ft.SnackBar(content=ft.Text(f"¡Configuración generada y guardada en {filename}!"), open=True)
         page.update()
 
-    # El resto del código de la UI se mantiene igual
-    # ...
     tabs = ft.Tabs(
         selected_index=0,
         animation_duration=300,
@@ -221,7 +216,7 @@ def main(page: ft.Page):
                 icon=ft.Icons.TUNE,
                 content=ft.Container(
                     content=ft.Column([
-                        ft.Text("Elige el tipo de dispositivo y las configuraciones básicas.", style=ft.TextThemeStyle.TITLE_MEDIUM),
+                        ft.Text("Paso 1: Elige el tipo de dispositivo y las configuraciones básicas.", style=ft.TextThemeStyle.TITLE_MEDIUM),
                         ft.RadioGroup(
                             ref=device_type,
                             content=ft.Row([
@@ -276,7 +271,7 @@ def main(page: ft.Page):
                 )
             ),
             ft.Tab(
-                text="Configuración de Router",
+                text="3. Configuración de Router",
                 icon=ft.Icons.HUB_OUTLINED,
                 content=ft.Container(
                     content=ft.Column([
@@ -289,6 +284,7 @@ def main(page: ft.Page):
                         ]),
                         ft.Column(ref=ospf_networks_col),
                         ft.Divider(),
+
                         ft.Divider(),
                         ft.Text("NAT", style=ft.TextThemeStyle.TITLE_MEDIUM),
                         ft.RadioGroup(
@@ -301,6 +297,7 @@ def main(page: ft.Page):
                                 ft.Radio(value="estatico", label="Estático"),
                             ])
                         ),
+
                         ft.Column(
                             ref=nat_dynamic_controls,
                             visible=True,  # Inicia visible porque el valor por defecto es "dinamico"
@@ -312,6 +309,7 @@ def main(page: ft.Page):
                                 ft.TextField(label="Wildcard", hint_text="0.0.0.255"),
                             ]
                         ),
+
                         ft.Column(
                             ref=nat_static_controls,
                             visible=False, # Inicia oculto

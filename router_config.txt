@@ -1,5 +1,21 @@
 enable
 configure terminal
 hostname R1
+line console 0
+ password 12121212
+ login
+ exit
+line vty 0 4
+ password 12121212
+ login
+ exit
+enable secret 1212121
+service password-encryption
+banner motd #12121212#
+interface g-0
+ ip address 102.1.1.1 255.255.255.0
+ no shutdown
+ exit
+
 end
 wr
