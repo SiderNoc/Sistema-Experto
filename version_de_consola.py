@@ -1,9 +1,4 @@
-# CAMBIOS REALIZADOS:
-# Se modifico todo el pedo para que ahora puedan configurarse varias interfaces en los switches
-
-
-
-from sistema_experto import aplicar_reglas, guardar_configuracion
+from motor_reglas import aplicar_reglas, guardar_configuracion
 
 def preguntar(texto):
     return input(texto).strip().lower()

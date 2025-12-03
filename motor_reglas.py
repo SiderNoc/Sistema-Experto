@@ -1,14 +1,4 @@
-# REGLAS DEL SISTEMA EXPERTPO
-
-# CAMBIOS REALIZADOS:
-# regla_ip_switch para manejar múltiples interfaces si es necesario.
-
-# COSAS A REVISAR:
-# Modificar regla_ip_switch para solo solictar numero de VLAN
-# Añadir reglas para aplicar las VLANs en los switches si es necesario.
-
-
-# Reglas para ambos dispositivos
+# BASE DE CONOCIMIENTOS
 def regla_hostname(hechos, config):
     if hechos.get("hostname"):
         config.append(f"hostname {hechos['hostname']}")
@@ -39,10 +29,8 @@ def regla_enable_secret(hechos, config):
         config.append(f"enable secret {hechos['enable_secret']}")
 
 def regla_encriptar_contrasenas(hechos, config):
-    # Solo añade el comando si la clave existe y es True
     if hechos.get("encriptar_contrasenas") is True: 
         config.append("service password-encryption")
-    # Un mensaje si el usuario explícitamente dijo que no
     elif hechos.get("encriptar_contrasenas") is False:
         print("[DEBUG] El usuario eligió no encriptar las contraseñas.")
 
@@ -70,15 +58,13 @@ def regla_interfaces_switch(hechos, config):
                 config.append(f" ip address {ip_switch} {mascara_switch}")
             elif ip_switch or mascara_switch:
                 print(f"[AVISO] Para la interfaz {nombre_interfaz} del switch, se proporcionó IP o máscara, pero no ambos. Se omitirá la configuración IP.")
-
-            # Opcional: Podrías añadir lógica para descripciones u otras configuraciones específicas de switch aquí
             descripcion = interfaz_data.get("descripcion")
             if descripcion:
                 config.append(f" description {descripcion}")
 
             config.append(" no shutdown")
             config.append(" exit")
-        config.append("") # Añade una línea en blanco para mayor legibilidad
+        config.append("")
 
 
 # Reglas de routers
@@ -100,7 +86,7 @@ def regla_interfaces_router(hechos, config):
             mascara_v4 = interfaz_data.get("mascara")
             if ip_v4 and mascara_v4:
                 config.append(f" ip address {ip_v4} {mascara_v4}")
-            elif ip_v4 or mascara_v4: # Si solo uno de los dos está presente
+            elif ip_v4 or mascara_v4:
                 print(f"[AVISO] Para la interfaz {nombre_interfaz}, se proporcionó IP o máscara IPv4, pero no ambos. Se omitirá la configuración IPv4.")
 
             ip_v6 = interfaz_data.get("ipv6")
@@ -112,13 +98,13 @@ def regla_interfaces_router(hechos, config):
                 else:
                     prefijo_v6_completo = prefijo_v6
                 config.append(f" ipv6 address {ip_v6}{prefijo_v6_completo}")
-                config.append(" ipv6 enable") # Generalmente se requiere para activar IPv6 en la interfaz
-            elif ip_v6 or prefijo_v6: # Si solo uno de los dos está presente
+                config.append(" ipv6 enable") 
+            elif ip_v6 or prefijo_v6:
                 print(f"[AVISO] Para la interfaz {nombre_interfaz}, se proporcionó dirección o prefijo IPv6, pero no ambos. Se omitirá la configuración IPv6.")
 
             config.append(" no shutdown")
             config.append(" exit")
-        config.append("") # Añade una línea en blanco después de configurar todas las interfaces para mayor legibilidad
+        config.append("")
 
 def regla_ospf(hechos, config):
     # Verificar si existe el process_id y la lista de redes OSPF
@@ -168,7 +154,9 @@ def regla_guardar(hechos, config):
     if "wr" in hechos:
         config.append("end")
         config.append("wr")
+###
 
+#MOTOR DE INFERENCIA
 def aplicar_reglas(hechos):
     config = []
     reglas = [
@@ -182,18 +170,17 @@ def aplicar_reglas(hechos):
         regla_interfaces_switch,
         regla_ospf,
         regla_nat,
-        regla_guardar #Esta regla se ejecuta al final
+        regla_guardar
     ]
 
     for regla in reglas:
         regla(hechos, config)
 
     return config
-
+###
 
 def guardar_configuracion(config, nombre_archivo):
     with open(nombre_archivo, 'w') as f:
-        #Mismo codigo que el commit anterior pero abreviado
         f.write("enable\nconfigure terminal\n")
         f.write("\n".join(config) + "\n")
     print(f" Configuración guardada en: {nombre_archivo}")

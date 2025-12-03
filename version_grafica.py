@@ -1,6 +1,6 @@
 # gui.py (Versión con nombre de archivo personalizado)
 import flet as ft
-from sistema_experto import aplicar_reglas, guardar_configuracion
+from motor_reglas import aplicar_reglas, guardar_configuracion
 import ipaddress
 
 def cidr_to_mask(cidr_str):
@@ -13,7 +13,7 @@ def cidr_to_mask(cidr_str):
     except (ValueError, TypeError): return ""
 
 def ip_and_cidr_to_network_wildcard(ip_str, cidr_str):
-    """Calcula la red y la wildcard a partir de una IP y un CIDR."""
+    # Calcula la red y la wildcard a partir de una IP y un CIDR.
     try:
         interface = ipaddress.IPv4Interface(f"{ip_str}/{cidr_str}")
         network = interface.network
@@ -23,10 +23,8 @@ def ip_and_cidr_to_network_wildcard(ip_str, cidr_str):
     except (ipaddress.AddressValueError, ipaddress.NetmaskValueError, ValueError):
         return None, None
 
-def main(page: ft.Page):
-    """
-    Función principal que construye y gestiona la interfaz gráfica con Flet. 
-    """
+def main(page: ft.Page): 
+    
     page.title = "Generador de Configuración de Red"
     page.window_width = 800
     page.window_height = 750 
