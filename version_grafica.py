@@ -29,7 +29,7 @@ def main(page: ft.Page):
     """
     page.title = "Generador de Configuración de Red"
     page.window_width = 800
-    page.window_height = 750 # Aumenté un poco la altura para el nuevo campo
+    page.window_height = 750 
 
     # --- REFERENCIAS A CONTROLES ---
     device_type = ft.Ref[ft.RadioGroup]()
@@ -52,8 +52,6 @@ def main(page: ft.Page):
     nat_static_controls = ft.Ref[ft.Column]()
     save_config_check = ft.Ref[ft.Checkbox]()
     output_textfield = ft.Ref[ft.TextField]()
-    
-    # --- NUEVA REFERENCIA ---
     filename_input = ft.Ref[ft.TextField]() 
 
     # --- LÓGICA DE LA INTERFAZ ---
@@ -74,7 +72,7 @@ def main(page: ft.Page):
             target_column.controls.remove(e.control.data)
             page.update()
         
-        interface_row_controls = [ft.IconButton(icon=ft.icons.DELETE_FOREVER, icon_color="red", on_click=remove_row, tooltip="Eliminar Interfaz")]
+        interface_row_controls = [ft.IconButton(icon=ft.Icons.DELETE_FOREVER, icon_color="red", on_click=remove_row, tooltip="Eliminar Interfaz")]
         if type == "router":
             interface_row_controls.extend([
                 ft.TextField(label="Interfaz", hint_text="GigabitEthernet0/0", width=160),
@@ -105,7 +103,7 @@ def main(page: ft.Page):
                 ft.TextField(label="Red", value=network_val, hint_text="192.168.1.0", expand=True),
                 ft.TextField(label="Wildcard", value=wildcard_val, hint_text="0.0.0.255", expand=True),
                 ft.TextField(label="Área", value=area_val, hint_text="0", width=100),
-                ft.IconButton(icon=ft.icons.DELETE, on_click=remove_row, tooltip="Eliminar Red")]) 
+                ft.IconButton(icon=ft.Icons.DELETE, on_click=remove_row, tooltip="Eliminar Red")]) 
         new_row.controls[3].data = new_row
         ospf_networks_col.current.controls.append(new_row) 
         page.update()
@@ -204,7 +202,7 @@ def main(page: ft.Page):
         config_text = "enable\nconfigure terminal\n" + "\n".join(config_list)
         output_textfield.current.value = config_text
         
-        # --- LÓGICA MODIFICADA PARA EL NOMBRE DEL ARCHIVO ---
+        # Logica para el nombre del archivo
         user_filename = filename_input.current.value
         if user_filename:
             user_filename = user_filename.strip() # Quitar espacios
@@ -227,7 +225,7 @@ def main(page: ft.Page):
         tabs=[
             ft.Tab(
                 text="1. General",
-                icon=ft.icons.TUNE,
+                icon=ft.Icons.TUNE,
                 content=ft.Container(
                     content=ft.Column([
                         ft.Text("Paso 1: Elige el tipo de dispositivo y las configuraciones básicas.", style=ft.TextThemeStyle.TITLE_MEDIUM),
@@ -259,7 +257,7 @@ def main(page: ft.Page):
             ),
             ft.Tab(
                 text="Interfaces",
-                icon=ft.icons.ROUTER_OUTLINED,
+                icon=ft.Icons.ROUTER_OUTLINED,
                 content=ft.Container(
                     content=ft.Column([
                         ft.Column(
@@ -267,7 +265,7 @@ def main(page: ft.Page):
                             visible=True,
                             controls=[
                                 ft.Text("Configuración de Interfaces de Router", style=ft.TextThemeStyle.TITLE_MEDIUM),
-                                ft.ElevatedButton("Añadir Interfaz de Router", icon=ft.icons.ADD, on_click=lambda e: add_interface(e, "router")),
+                                ft.ElevatedButton("Añadir Interfaz de Router", icon=ft.Icons.ADD, on_click=lambda e: add_interface(e, "router")),
                                 ft.Column(ref=router_interfaces_col),
                             ]
                         ),
@@ -276,7 +274,7 @@ def main(page: ft.Page):
                             visible=False,
                             controls=[
                                 ft.Text("Configuración de Interfaces de Switch", style=ft.TextThemeStyle.TITLE_MEDIUM),
-                                ft.ElevatedButton("Añadir Interfaz de Switch", icon=ft.icons.ADD, on_click=lambda e: add_interface(e, "switch")),
+                                ft.ElevatedButton("Añadir Interfaz de Switch", icon=ft.Icons.ADD, on_click=lambda e: add_interface(e, "switch")),
                                 ft.Column(ref=switch_interfaces_col),
                             ]
                         )
@@ -286,14 +284,14 @@ def main(page: ft.Page):
             ),
             ft.Tab(
                 text="3. Configuración de Router",
-                icon=ft.icons.HUB_OUTLINED,
+                icon=ft.Icons.HUB_OUTLINED,
                 content=ft.Container(
                     content=ft.Column([
                         ft.Text("OSPF", style=ft.TextThemeStyle.TITLE_MEDIUM),
                         ft.TextField(ref=ospf_process_id, label="ID del Proceso OSPF", hint_text="Ej: 1", width=200),
                         ft.Row([
-                            ft.ElevatedButton("Añadir Red Manualmente", icon=ft.icons.ADD, on_click=add_ospf_network),
-                            ft.ElevatedButton("Descubrir Interfaces", icon=ft.icons.ADD_LINK, on_click=discover_ospf_networks, tooltip="Añadir redes desde la pestaña de interfaces"),
+                            ft.ElevatedButton("Añadir Red Manualmente", icon=ft.Icons.ADD, on_click=add_ospf_network),
+                            ft.ElevatedButton("Descubrir Interfaces", icon=ft.Icons.ADD_LINK, on_click=discover_ospf_networks, tooltip="Añadir redes desde la pestaña de interfaces"),
                             ft.TextField(ref=ospf_default_area, label="Área por defecto", value="0", width=120)
                         ]),
                         ft.Column(ref=ospf_networks_col),
@@ -340,27 +338,26 @@ def main(page: ft.Page):
             ),
             ft.Tab(
                 text="Generar",
-                icon=ft.icons.PLAYLIST_ADD_CHECK_CIRCLE_OUTLINED,
+                icon=ft.Icons.PLAYLIST_ADD_CHECK_CIRCLE_OUTLINED,
                 content=ft.Container(
                     content=ft.Column([
                         ft.Text("Paso Final: Genera y guarda tu configuración.", style=ft.TextThemeStyle.TITLE_MEDIUM),
                         
-                        # --- NUEVO CAMPO DE TEXTO ---
+                        #Campo de texto para el nombre
                         ft.TextField(
                             ref=filename_input, 
                             label="Nombre del archivo (Opcional)", 
                             hint_text="Ej: router_principal", 
                             suffix_text=".txt"
                         ),
-                        # ----------------------------
 
                         ft.Checkbox(ref=save_config_check, label="Guardar configuración en el dispositivo (wr)", value=True),
                         ft.ElevatedButton(
                             text="Generar Archivo de Configuración",
-                            icon=ft.icons.SAVE, 
+                            icon=ft.Icons.SAVE, 
                             on_click=generate_config, 
-                            bgcolor=ft.colors.BLUE_700, 
-                            color=ft.colors.WHITE 
+                            bgcolor=ft.Colors.BLUE_700, 
+                            color=ft.Colors.WHITE 
                         ),
                         ft.TextField(ref=output_textfield, multiline=True, read_only=True, label="Resultado de la Configuración", expand=True)
                     ], expand=True, spacing=15),
