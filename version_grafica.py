@@ -209,7 +209,7 @@ def main(page: ft.Page):
             obtener_tab_interfaces(page, refs, on_add_interface),
             obtener_tab_enrutamiento(page, refs, on_add_ospf_network, on_discover_ospf_networks, on_toggle_nat),
             obtener_tab_generar(refs, on_generate_config),
-            obtener_tab_consejos()
+            obtener_tab_consejos(page)
         ],
         expand=1,
     )
