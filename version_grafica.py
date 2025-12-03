@@ -1,4 +1,4 @@
-# gui.py (Versión con nombre de archivo personalizado)
+# gui.py (Versión Estilizada y Corregida)
 import flet as ft
 from motor_reglas import aplicar_reglas, guardar_configuracion
 import ipaddress
@@ -25,9 +25,49 @@ def ip_and_cidr_to_network_wildcard(ip_str, cidr_str):
 
 def main(page: ft.Page): 
     
+    # CONFIGURACIÓN DE TEMA Y PÁGINA
     page.title = "Generador de Configuración de Red"
-    page.window_width = 800
-    page.window_height = 750 
+    page.window_width = 900
+    page.window_height = 800
+    page.theme_mode = ft.ThemeMode.LIGHT 
+    page.padding = 20
+
+    # --- FUNCIÓN DE AYUDA ESTILIZADA ---
+    def mostrar_ayuda(e, titulo, mensaje):
+        dlg = ft.AlertDialog(
+            modal=True,
+            title=ft.Row([
+                ft.Icon(ft.Icons.INFO_OUTLINE, color=ft.Colors.BLUE_700, size=30),
+                ft.Text(titulo, weight=ft.FontWeight.BOLD, color=ft.Colors.BLUE_GREY_900)
+            ], alignment=ft.MainAxisAlignment.START, spacing=10),
+            content=ft.Container(
+                content=ft.Text(mensaje, size=15, color=ft.Colors.GREY_800),
+                padding=10,
+                width=400,
+            ),
+            actions=[
+                ft.ElevatedButton(
+                    "Entendido", 
+                    on_click=lambda e: page.close(dlg),
+                    bgcolor=ft.Colors.BLUE_700,
+                    color=ft.Colors.WHITE,
+                    elevation=2
+                )
+            ],
+            actions_alignment=ft.MainAxisAlignment.END,
+            shape=ft.RoundedRectangleBorder(radius=12),
+        )
+        page.open(dlg)
+
+    # --- HELPER PARA BOTONES DE AYUDA ---
+    def crear_boton_ayuda(titulo, mensaje, tooltip_corto):
+        return ft.IconButton(
+            icon=ft.Icons.HELP, 
+            icon_color=ft.Colors.INDIGO_500, 
+            icon_size=24,
+            tooltip=tooltip_corto,
+            on_click=lambda e: mostrar_ayuda(e, titulo, mensaje)
+        )
 
     # --- REFERENCIAS A CONTROLES ---
     device_type = ft.Ref[ft.RadioGroup]()
@@ -71,21 +111,23 @@ def main(page: ft.Page):
             page.update()
         
         interface_row_controls = [ft.IconButton(icon=ft.Icons.DELETE_FOREVER, icon_color="red", on_click=remove_row, tooltip="Eliminar Interfaz")]
+        
         if type == "router":
             interface_row_controls.extend([
-                ft.TextField(label="Interfaz", hint_text="GigabitEthernet0/0", width=160),
-                ft.TextField(label="Descripción", expand=True),
-                ft.TextField(label="IP IPv4", width=140),
-                ft.TextField(label="Prefijo CIDR", hint_text="24", width=100),
-                ft.TextField(label="IP IPv6", width=200),
-                ft.TextField(label="Prefijo", hint_text="/64", width=80)])
+                ft.TextField(label="Interfaz", hint_text="GigabitEthernet0/0", width=160, border_radius=8, tooltip="Nombre físico de la interfaz"),
+                ft.TextField(label="Descripción", expand=True, border_radius=8),
+                ft.TextField(label="IP IPv4", width=140, border_radius=8, tooltip="Ej: 192.168.1.1"),
+                ft.TextField(label="Prefijo", hint_text="24", width=80, border_radius=8, tooltip="CIDR (Ej: 24)"),
+                ft.TextField(label="IP IPv6", width=200, border_radius=8, tooltip="Ej: 2001:db8::1"),
+                ft.TextField(label="Prefijo v6", hint_text="/64", width=100, border_radius=8)])
         else: # switch
             interface_row_controls.extend([
-                ft.TextField(label="Interfaz", hint_text="VLAN1", width=160),
-                ft.TextField(label="Descripción", expand=True),
-                ft.TextField(label="Dirección IP", width=160),
-                ft.TextField(label="Prefijo CIDR", hint_text="24", width=110),])
-        new_row = ft.Row(controls=interface_row_controls)
+                ft.TextField(label="Interfaz", hint_text="VLAN1", width=160, border_radius=8, tooltip="Interfaz virtual del Switch (SVI)"),
+                ft.TextField(label="Descripción", expand=True, border_radius=8),
+                ft.TextField(label="Dirección IP", width=160, border_radius=8, tooltip="IP de gestión para el Switch"),
+                ft.TextField(label="Prefijo", hint_text="24", width=110, border_radius=8),])
+        
+        new_row = ft.Row(controls=interface_row_controls, alignment=ft.MainAxisAlignment.START)
         new_row.controls[0].data = new_row
         target_col = router_interfaces_col.current if type == "router" else switch_interfaces_col.current
         target_col.controls.append(new_row)
@@ -98,10 +140,12 @@ def main(page: ft.Page):
 
         new_row = ft.Row(
             controls=[
-                ft.TextField(label="Red", value=network_val, hint_text="192.168.1.0", expand=True),
-                ft.TextField(label="Wildcard", value=wildcard_val, hint_text="0.0.0.255", expand=True),
-                ft.TextField(label="Área", value=area_val, hint_text="0", width=100),
-                ft.IconButton(icon=ft.Icons.DELETE, on_click=remove_row, tooltip="Eliminar Red")]) 
+                ft.TextField(label="Red", value=network_val, hint_text="192.168.1.0", expand=True, border_radius=8),
+                ft.TextField(label="Wildcard", value=wildcard_val, hint_text="0.0.0.255", expand=True, border_radius=8, tooltip="Máscara inversa"),
+                ft.TextField(label="Área", value=area_val, hint_text="0", width=100, border_radius=8, tooltip="Area OSPF"),
+                ft.IconButton(icon=ft.Icons.DELETE, icon_color="red", on_click=remove_row, tooltip="Eliminar Red")
+            ]
+        ) 
         new_row.controls[3].data = new_row
         ospf_networks_col.current.controls.append(new_row) 
         page.update()
@@ -162,13 +206,10 @@ def main(page: ft.Page):
                 if interfaz["interface"]: interfaces.append(interfaz)
             if interfaces: hechos["interfaces_switch"] = interfaces
 
-        # 3. Recopilar datos de Router (OSPF, NAT)
         if hechos["tipo"] == "router":
-            # Recoger OSPF Process ID
             if ospf_process_id.current.value:
                 hechos["ospf_process_id"] = ospf_process_id.current.value
             
-            # Recoger redes OSPF (de forma independiente al Process ID)
             redes = []
             for row in ospf_networks_col.current.controls:
                 red = {"network": row.controls[0].value, "wildcard": row.controls[1].value, "area": row.controls[2].value}
@@ -177,7 +218,6 @@ def main(page: ft.Page):
             if redes:
                 hechos["ospf_networks"] = redes
 
-            # Recoger NAT
             if nat_type.current.value:
                 hechos["tipo_nat"] = nat_type.current.value
                 panel = nat_dynamic_controls.current if nat_type.current.value == "dinamico" else nat_static_controls.current
@@ -200,16 +240,14 @@ def main(page: ft.Page):
         config_text = "enable\nconfigure terminal\n" + "\n".join(config_list)
         output_textfield.current.value = config_text
         
-        # Logica para el nombre del archivo
         user_filename = filename_input.current.value
         if user_filename:
-            user_filename = user_filename.strip() # Quitar espacios
+            user_filename = user_filename.strip() 
             if not user_filename.endswith(".txt"):
                 filename = f"{user_filename}.txt"
             else:
                 filename = user_filename
         else:
-            # Nombre por defecto si está vacío
             filename = f"{hechos['tipo']}_config.txt"
         
         guardar_configuracion(config_list, filename)
@@ -220,13 +258,30 @@ def main(page: ft.Page):
     tabs = ft.Tabs(
         selected_index=0,
         animation_duration=300,
+        indicator_color=ft.Colors.BLUE_700,
+        label_color=ft.Colors.BLUE_900,
+        unselected_label_color=ft.Colors.GREY_500,
         tabs=[
             ft.Tab(
                 text="1. General",
-                icon=ft.Icons.TUNE,
+                icon=ft.Icons.SETTINGS,
                 content=ft.Container(
                     content=ft.Column([
-                        ft.Text("Paso 1: Elige el tipo de dispositivo y las configuraciones básicas.", style=ft.TextThemeStyle.TITLE_MEDIUM),
+                        # HEADER ESTILIZADO
+                        ft.Container(
+                            content=ft.Row([
+                                ft.Icon(ft.Icons.TUNE, color=ft.Colors.BLUE_700),
+                                ft.Text("Configuración Básica", style=ft.TextThemeStyle.HEADLINE_SMALL, color=ft.Colors.BLUE_GREY_800),
+                                crear_boton_ayuda("Configuración Básica", 
+                                    "Define la identidad y seguridad del dispositivo:\n\n"
+                                    "• Hostname: Nombre en la consola (ej. Router1).\n"
+                                    "• VTY: Contraseña para acceso remoto (SSH/Telnet).\n"
+                                    "• Enable Secret: Contraseña encriptada privilegiada.", 
+                                    "Ayuda General")
+                            ]),
+                            margin=ft.margin.only(bottom=15)
+                        ),
+                        
                         ft.RadioGroup(
                             ref=device_type,
                             content=ft.Row([
@@ -236,130 +291,201 @@ def main(page: ft.Page):
                             value="router",
                             on_change=toggle_device_panels,
                         ),
-                        ft.TextField(ref=hostname, label="Hostname", hint_text="Ej: R1-Oficina"),
-                        ft.TextField(ref=banner_motd, label="Banner MOTD", hint_text="Acceso no autorizado prohibido"),
+                        ft.TextField(ref=hostname, label="Hostname", hint_text="Ej: R1-Oficina", border_radius=8, prefix_icon=ft.Icons.COMPUTER),
+                        ft.TextField(ref=banner_motd, label="Banner MOTD", hint_text="Acceso prohibido", border_radius=8, prefix_icon=ft.Icons.WARNING_AMBER),
+                        
+                        ft.Container(height=10), 
+
                         ft.Checkbox(label="Configurar contraseñas", on_change=toggle_password_fields),
-                        ft.Column(
+                        ft.Container(
                             ref=password_controls,
                             visible=False,
-                            controls=[
-                                ft.TextField(ref=console_pw, label="Contraseña de Consola", password=True, can_reveal_password=True),
-                                ft.TextField(ref=vty_pw, label="Contraseña VTY (telnet/ssh)", password=True, can_reveal_password=True),
-                                ft.TextField(ref=enable_secret, label="Enable Secret", password=True, can_reveal_password=True),
-                                ft.Checkbox(ref=encrypt_passwords, label="Encriptar todas las contraseñas (service password-encryption)", value=True),
-                            ]
+                            bgcolor=ft.Colors.BLUE_50, 
+                            padding=15,
+                            border_radius=10,
+                            content=ft.Column(
+                                controls=[
+                                    ft.Text("Seguridad", weight=ft.FontWeight.BOLD, color=ft.Colors.BLUE_GREY_700),
+                                    ft.TextField(ref=console_pw, label="Contraseña Consola", password=True, can_reveal_password=True, border_radius=8, prefix_icon=ft.Icons.USB),
+                                    ft.TextField(ref=vty_pw, label="Contraseña VTY", password=True, can_reveal_password=True, border_radius=8, prefix_icon=ft.Icons.WIFI_LOCK),
+                                    ft.TextField(ref=enable_secret, label="Enable Secret", password=True, can_reveal_password=True, border_radius=8, prefix_icon=ft.Icons.SECURITY),
+                                    ft.Checkbox(ref=encrypt_passwords, label="Encriptar todas (Service Password-Encryption)", value=True),
+                                ]
+                            )
                         )
-                    ]),
-                    padding=20,
+                    ], scroll=ft.ScrollMode.AUTO),
+                    padding=30,
                 )
             ),
             ft.Tab(
                 text="Interfaces",
-                icon=ft.Icons.ROUTER_OUTLINED,
+                icon=ft.Icons.CABLE,
                 content=ft.Container(
                     content=ft.Column([
                         ft.Column(
                             ref=router_interface_panel,
                             visible=True,
                             controls=[
-                                ft.Text("Configuración de Interfaces de Router", style=ft.TextThemeStyle.TITLE_MEDIUM),
-                                ft.ElevatedButton("Añadir Interfaz de Router", icon=ft.Icons.ADD, on_click=lambda e: add_interface(e, "router")),
-                                ft.Column(ref=router_interfaces_col),
+                                ft.Row([
+                                    ft.Text("Interfaces de Router", style=ft.TextThemeStyle.HEADLINE_SMALL, color=ft.Colors.BLUE_GREY_800),
+                                    crear_boton_ayuda("Interfaces Router", 
+                                            "Configura las puertas de enlace.\n\n"
+                                            "• CIDR: Notación abreviada de máscara (/24 = 255.255.255.0).\n"
+                                            "• IPv6: Direcciones de nueva generación (Hexadecimal).",
+                                            "Ayuda Interfaces")
+                                ]),
+                                ft.ElevatedButton("Añadir Interfaz", icon=ft.Icons.ADD, on_click=lambda e: add_interface(e, "router"), bgcolor=ft.Colors.TEAL_600, color="white"),
+                                ft.Column(ref=router_interfaces_col, spacing=10),
                             ]
                         ),
                         ft.Column(
                             ref=switch_interface_panel,
                             visible=False,
                             controls=[
-                                ft.Text("Configuración de Interfaces de Switch", style=ft.TextThemeStyle.TITLE_MEDIUM),
-                                ft.ElevatedButton("Añadir Interfaz de Switch", icon=ft.Icons.ADD, on_click=lambda e: add_interface(e, "switch")),
-                                ft.Column(ref=switch_interfaces_col),
+                                ft.Text("Interfaces de Switch (VLANs)", style=ft.TextThemeStyle.HEADLINE_SMALL),
+                                ft.ElevatedButton("Añadir SVI / VLAN", icon=ft.Icons.ADD, on_click=lambda e: add_interface(e, "switch"), bgcolor=ft.Colors.TEAL_600, color="white"),
+                                ft.Column(ref=switch_interfaces_col, spacing=10),
                             ]
                         )
-                    ]),
-                    padding=20
+                    ], scroll=ft.ScrollMode.AUTO),
+                    padding=30
                 )
             ),
             ft.Tab(
-                text="3. Configuración de Router",
-                icon=ft.Icons.HUB_OUTLINED,
+                text="Enrutamiento y NAT",
+                icon=ft.Icons.ROUTER,
                 content=ft.Container(
                     content=ft.Column([
-                        ft.Text("OSPF", style=ft.TextThemeStyle.TITLE_MEDIUM),
-                        ft.TextField(ref=ospf_process_id, label="ID del Proceso OSPF", hint_text="Ej: 1", width=200),
-                        ft.Row([
-                            ft.ElevatedButton("Añadir Red Manualmente", icon=ft.Icons.ADD, on_click=add_ospf_network),
-                            ft.ElevatedButton("Descubrir Interfaces", icon=ft.Icons.ADD_LINK, on_click=discover_ospf_networks, tooltip="Añadir redes desde la pestaña de interfaces"),
-                            ft.TextField(ref=ospf_default_area, label="Área por defecto", value="0", width=120)
-                        ]),
-                        ft.Column(ref=ospf_networks_col),
-                        ft.Divider(),
-
-                        ft.Divider(),
-                        ft.Text("NAT", style=ft.TextThemeStyle.TITLE_MEDIUM),
-                        ft.RadioGroup(
-                            ref=nat_type,
-
-                            value="dinamico",
-                            on_change=toggle_nat_panels,
-                            content=ft.Row([
-                                ft.Radio(value="dinamico", label="Dinámico"),
-                                ft.Radio(value="estatico", label="Estático"),
+                        # SECCION OSPF
+                        ft.Container(
+                            padding=15,
+                            border=ft.border.all(1, ft.Colors.GREY_300),
+                            border_radius=10,
+                            content=ft.Column([
+                                ft.Row([
+                                    ft.Icon(ft.Icons.SHARE, color=ft.Colors.ORANGE_700),
+                                    ft.Text("Protocolo OSPF", style=ft.TextThemeStyle.TITLE_LARGE, weight=ft.FontWeight.BOLD),
+                                    crear_boton_ayuda("OSPF (Open Shortest Path First)", 
+                                        "Protocolo de enrutamiento dinámico.\n\n"
+                                        "• Process ID: Identificador local (1-65535).\n"
+                                        "• Wildcard: Máscara invertida. (0 verifica, 255 ignora).\n"
+                                        "• Área: Típicamente 0 para Backbone.",
+                                        "Ayuda OSPF")
+                                ]),
+                                ft.TextField(ref=ospf_process_id, label="ID del Proceso", hint_text="Ej: 1", width=200, border_radius=8),
+                                ft.Row([
+                                    ft.ElevatedButton("Añadir Red", icon=ft.Icons.ADD, on_click=add_ospf_network),
+                                    ft.ElevatedButton("Auto-Descubrir", icon=ft.Icons.AUTO_MODE, on_click=discover_ospf_networks, bgcolor=ft.Colors.AMBER_700, color="white", tooltip="Calcula redes desde tus interfaces"),
+                                    ft.TextField(ref=ospf_default_area, label="Área Default", value="0", width=120, border_radius=8)
+                                ]),
+                                ft.Column(ref=ospf_networks_col),
                             ])
                         ),
 
-                        ft.Column(
-                            ref=nat_dynamic_controls,
-                            visible=True,  # Inicia visible porque el valor por defecto es "dinamico"
-                            controls=[
-                                ft.TextField(label="Interfaz Interna", hint_text="GigabitEthernet0/0"),
-                                ft.TextField(label="Interfaz Externa", hint_text="GigabitEthernet0/1"),
-                                ft.TextField(label="Número de ACL", hint_text="1", width=150),
-                                ft.TextField(label="Red Interna", hint_text="192.168.1.0"),
-                                ft.TextField(label="Wildcard", hint_text="0.0.0.255"),
-                            ]
-                        ),
+                        ft.Divider(height=30, thickness=2),
 
-                        ft.Column(
-                            ref=nat_static_controls,
-                            visible=False, # Inicia oculto
-                            controls=[
-                                ft.TextField(label="Interfaz Interna", hint_text="GigabitEthernet0/0"),
-                                ft.TextField(label="Interfaz Externa", hint_text="GigabitEthernet0/1"),
-                                ft.TextField(label="IP Privada Interna", hint_text="192.168.1.10"),
-                                ft.TextField(label="IP Pública Global", hint_text="200.1.1.10"),
-                            ]
+                        # SECCION NAT
+                        ft.Container(
+                            padding=15,
+                            border=ft.border.all(1, ft.Colors.GREY_300),
+                            border_radius=10,
+                            content=ft.Column([
+                                ft.Row([
+                                    ft.Icon(ft.Icons.PUBLIC, color=ft.Colors.GREEN_700),
+                                    ft.Text("NAT (Traducción de Direcciones)", style=ft.TextThemeStyle.TITLE_LARGE, weight=ft.FontWeight.BOLD),
+                                    crear_boton_ayuda("Ayuda NAT", 
+                                        "Permite la salida a Internet:\n\n"
+                                        "• Dinámico (PAT): Múltiples equipos salen por una IP pública (Requiere ACL).\n"
+                                        "• Estático: Mapeo 1 a 1 (Ej: Servidores Web).", 
+                                        "Ayuda NAT")
+                                ]),
+                                ft.RadioGroup(
+                                    ref=nat_type,
+                                    value="dinamico",
+                                    on_change=toggle_nat_panels,
+                                    content=ft.Row([
+                                        ft.Radio(value="dinamico", label="Dinámico (PAT)"),
+                                        ft.Radio(value="estatico", label="Estático"),
+                                    ])
+                                ),
+                                ft.Column(
+                                    ref=nat_dynamic_controls,
+                                    visible=True,  
+                                    controls=[
+                                        ft.TextField(label="Interfaz Interna (LAN)", hint_text="g0/0", border_radius=8, prefix_icon=ft.Icons.LOGIN),
+                                        ft.TextField(label="Interfaz Externa (WAN)", hint_text="g0/1", border_radius=8, prefix_icon=ft.Icons.LOGOUT),
+                                        ft.TextField(label="ACL ID", hint_text="1", width=150, border_radius=8, helper_text="ACL Estándar (1-99)"),
+                                        ft.TextField(label="Red Interna", hint_text="192.168.1.0", border_radius=8),
+                                        ft.TextField(label="Wildcard", hint_text="0.0.0.255", border_radius=8),
+                                    ]
+                                ),
+                                ft.Column(
+                                    ref=nat_static_controls,
+                                    visible=False, 
+                                    controls=[
+                                        ft.TextField(label="Interfaz Interna", hint_text="g0/0", border_radius=8),
+                                        ft.TextField(label="Interfaz Externa", hint_text="g0/1", border_radius=8),
+                                        ft.TextField(label="IP Privada", hint_text="192.168.1.10", border_radius=8),
+                                        ft.TextField(label="IP Pública", hint_text="200.1.1.10", border_radius=8),
+                                    ]
+                                )
+                            ])
                         )
-                    ]),
-                    padding=20
+                    ], scroll=ft.ScrollMode.AUTO),
+                    padding=30
                 )
             ),
             ft.Tab(
                 text="Generar",
-                icon=ft.Icons.PLAYLIST_ADD_CHECK_CIRCLE_OUTLINED,
+                icon=ft.Icons.SAVE_ALT,
                 content=ft.Container(
                     content=ft.Column([
-                        ft.Text("Paso Final: Genera y guarda tu configuración.", style=ft.TextThemeStyle.TITLE_MEDIUM),
+                        ft.Text("Generar y Guardar", style=ft.TextThemeStyle.HEADLINE_MEDIUM, color=ft.Colors.BLUE_GREY_900),
                         
-                        #Campo de texto para el nombre
+                        ft.Container(
+                            padding=20,
+                            bgcolor=ft.Colors.BLUE_GREY_50,
+                            border_radius=10,
+                            content=ft.Column([
+                                ft.TextField(
+                                    ref=filename_input, 
+                                    label="Nombre del archivo", 
+                                    hint_text="ej: configuracion_final", 
+                                    suffix_text=".txt",
+                                    border_radius=8,
+                                    prefix_icon=ft.Icons.FILE_PRESENT
+                                ),
+                                ft.Checkbox(ref=save_config_check, label="Agregar comando de guardado (write memory)", value=True),
+                                ft.ElevatedButton(
+                                    text="GENERAR SCRIPT",
+                                    icon=ft.Icons.ROCKET_LAUNCH, 
+                                    on_click=generate_config, 
+                                    style=ft.ButtonStyle(
+                                        color=ft.Colors.WHITE,
+                                        bgcolor=ft.Colors.BLUE_800,
+                                        padding=20,
+                                        shape=ft.RoundedRectangleBorder(radius=8)
+                                    ),
+                                    width=300
+                                ),
+                            ], horizontal_alignment=ft.CrossAxisAlignment.CENTER)
+                        ),
+                        
+                        ft.Container(
+                            content=ft.Text("Vista Previa:", weight=ft.FontWeight.BOLD),
+                            margin=ft.margin.only(top=20)
+                        ),
+                        
                         ft.TextField(
-                            ref=filename_input, 
-                            label="Nombre del archivo (Opcional)", 
-                            hint_text="Ej: router_principal", 
-                            suffix_text=".txt"
-                        ),
-
-                        ft.Checkbox(ref=save_config_check, label="Guardar configuración en el dispositivo (wr)", value=True),
-                        ft.ElevatedButton(
-                            text="Generar Archivo de Configuración",
-                            icon=ft.Icons.SAVE, 
-                            on_click=generate_config, 
-                            bgcolor=ft.Colors.BLUE_700, 
-                            color=ft.Colors.WHITE 
-                        ),
-                        ft.TextField(ref=output_textfield, multiline=True, read_only=True, label="Resultado de la Configuración", expand=True)
-                    ], expand=True, spacing=15),
-                    padding=20
+                            ref=output_textfield, 
+                            multiline=True, 
+                            read_only=True, 
+                            text_style=ft.TextStyle(font_family="Consolas", size=14), # Fuente monoespaciada tipo terminal
+                            border_color=ft.Colors.BLUE_GREY_200,
+                            expand=True
+                        )
+                    ], expand=True),
+                    padding=30
                 )
             )
         ],
