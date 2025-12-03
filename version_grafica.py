@@ -1,4 +1,7 @@
 import flet as ft
+import os
+import platform
+import subprocess
 from motor_reglas import aplicar_reglas, guardar_configuracion
 from utils import cidr_to_mask, ip_and_cidr_to_network_wildcard
 
@@ -42,6 +45,21 @@ def main(page: ft.Page):
         'filename_input': ft.Ref[ft.TextField]()
     }
 
+    # LÓGICA DEL SISTEMA OPERATIVO
+    def abrir_carpeta(e):
+        # Abre el explorador de archivos en la carpeta actual
+        path = os.getcwd() # Obtiene la ruta de la carpeta del proyecto
+        try:
+            if platform.system() == "Windows":
+                os.startfile(path)
+            elif platform.system() == "Darwin":  # macOS
+                subprocess.Popen(["open", path])
+            else:  # Linux
+                subprocess.Popen(["xdg-open", path])
+        except Exception as ex:
+            print(f"Error al abrir carpeta: {ex}")
+            page.open(ft.SnackBar(content=ft.Text(f"No se pudo abrir la carpeta: {ex}")))
+
     # CONTROLADORES DE EVENTOS
     
     def on_password_change(e):
@@ -52,7 +70,6 @@ def main(page: ft.Page):
         is_router = refs['device_type'].current.value == "router"
         refs['router_interface_panel'].current.visible = is_router
         refs['switch_interface_panel'].current.visible = not is_router
-        # Accedemos a las pestañas por índice. Si cambia el orden, ajustar aquí.
         if len(tabs.tabs) > 2:
             tabs.tabs[2].disabled = not is_router
         page.update()
@@ -110,8 +127,20 @@ def main(page: ft.Page):
                 network, wildcard = ip_and_cidr_to_network_wildcard(ip_val, cidr_val)
                 if network and wildcard:
                     on_add_ospf_network(None, network_val=network, wildcard_val=wildcard, area_val=default_area)
-        page.snack_bar = ft.SnackBar(content=ft.Text("Redes OSPF descubiertas y añadidas."), open=True)
-        page.update()
+        
+        # Snackbar Estilizado
+        page.open(
+            ft.SnackBar(
+                content=ft.Row([
+                    ft.Icon(ft.Icons.CHECK_CIRCLE, color=ft.Colors.WHITE),
+                    ft.Text("Redes OSPF descubiertas", color=ft.Colors.WHITE, weight=ft.FontWeight.BOLD)
+                ]),
+                bgcolor=ft.Colors.TEAL_700,
+                behavior=ft.SnackBarBehavior.FLOATING,
+                margin=20,
+                duration=3000,
+            )
+        )
 
     def on_toggle_nat(e):
         is_dynamic = refs['nat_type'].current.value == "dinamico"
@@ -197,7 +226,25 @@ def main(page: ft.Page):
         filename = f"{user_filename.strip()}.txt" if user_filename else f"{hechos['tipo']}_config.txt"
         
         guardar_configuracion(config_list, filename)
-        page.snack_bar = ft.SnackBar(content=ft.Text(f"¡Guardado en {filename}!"), open=True)
+        
+        # --- SNACKBAR ESTILIZADO CON BOTÓN DE ABRIR ---
+        page.open(
+            ft.SnackBar(
+                content=ft.Row([
+                    ft.Icon(ft.Icons.SAVE_AS, color=ft.Colors.WHITE),
+                    ft.Text(f"Archivo guardado: {filename}", color=ft.Colors.WHITE, weight=ft.FontWeight.BOLD)
+                ]),
+                bgcolor=ft.Colors.INDIGO_600,
+                behavior=ft.SnackBarBehavior.FLOATING,
+                margin=20,
+                duration=5000,
+                action="Abrir carpeta",
+                action_color=ft.Colors.AMBER_400,
+                on_action=abrir_carpeta, 
+                show_close_icon=True,
+                close_icon_color=ft.Colors.WHITE,
+            )
+        )
         page.update()
 
     # CONSTRUCCIÓN DE LA APP
@@ -215,7 +262,7 @@ def main(page: ft.Page):
     )
 
     page.add(tabs)
-    on_device_change(None) # Inicializar estado visual
+    on_device_change(None)
 
 if __name__ == "__main__":
     ft.app(target=main)
